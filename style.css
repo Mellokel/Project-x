@@ -31,3 +31,14 @@ html{scroll-padding-top:calc(var(--header-height) + 16px)}
 .site-header+main{padding-top:24px}
 @media(max-width:700px){.header-pages,.header-sections{padding-left:18px;padding-right:18px}.header-pages{min-height:62px;gap:12px}.header-pages .brand{font-size:11px}.header-pages .brand-icon{font-size:24px;margin-right:6px}.page-nav{gap:3px}.page-nav a{padding:8px 11px;font-size:14px}.section-nav{gap:24px}.site-header+main{padding-top:16px}}
 @media(max-width:360px){.header-pages .brand-name{display:none}}
+
+.trip-memory figure{margin:0;border:1px solid var(--line);border-radius:5px;overflow:hidden;background:var(--panel)}
+.trip-memory figure a{display:block}
+.trip-memory img{display:block;width:100%;height:auto}
+.trip-memory figcaption{padding:16px 22px;color:var(--muted);font-size:14px}
+.trip-memory .section-head .button{flex-shrink:0}
+@media(max-width:700px){.trip-memory .section-head .button{margin-top:18px}.trip-memory figcaption{padding:14px 16px}}
+
+/* Three pages stay on one row on compact screens. */
+@media(max-width:600px){.header-pages .brand-name{display:none}.header-pages .brand-icon{margin-right:0}.page-nav a{padding:8px 10px;font-size:14px}}
+.person-link:hover strong{color:var(--accent)}

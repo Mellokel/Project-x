@@ -19,3 +19,7 @@
 Источник: https://commons.wikimedia.org/wiki/File:Winter_Elbrus._South_slope_of_Cheget_Mountain_from_the_top.jpg
 Лицензия CC BY-SA 4.0: https://creativecommons.org/licenses/by-sa/4.0/
 На странице применяется кадрирование средствами CSS.
+
+Участники: participants.html. Личные страницы: participant-01.html … participant-12.html.
+Данные и будущее расселение: participants.json (housingArkhyz / housingElbrus).
+После изменения данных выполнить: python3 scripts/build-participants.py
