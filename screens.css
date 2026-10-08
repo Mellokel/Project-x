@@ -1,0 +1,4 @@
+main[data-screen]{padding-top:24px;min-height:50vh}
+main[data-screen] [tabindex="-1"]:focus{outline:none}
+.no-script{padding:24px;color:var(--muted);text-align:center}
+@media(max-width:700px){main[data-screen]{padding-top:16px}}
