@@ -29,7 +29,7 @@ for file,route in files.items():
  screens[route]={'title':re.search(r'<title>(.*?)</title>',s)[1],'nav':rewrite(nav,route),'page':'participants' if route.startswith('person/') else route}
 home=(SRC/'home.html').read_text()
 head=re.search(r'<head>(.*?)</head>',home,re.S)[1]
-head+='\n<link rel="stylesheet" href="road.css"><link rel="stylesheet" href="participants.css"><link rel="stylesheet" href="screens.css"><link rel="stylesheet" href="tab-bar.css">'
+head+='\n<link rel="stylesheet" href="road.css"><link rel="stylesheet" href="participants.css"><link rel="stylesheet" href="screens.css"><link rel="stylesheet" href="tab-bar.css"><link rel="stylesheet" href="winter-background.css">'
 header='''<header class="site-header"><div class="header-pages"><a class="brand" href="#trip" aria-label="Выше облаков — главная"><span class="brand-icon" aria-hidden="true">↟</span><span class="brand-name">ВЫШЕ ОБЛАКОВ</span></a></div><div class="header-sections">'''+screens['trip']['nav']+'</div></header>'
 icons={
  'trip':'<path d="m2 19 7-13 5 9 3-5 5 9H2Z"/><path d="m7 10 2 2 2-2"/>',
@@ -47,7 +47,7 @@ templates='\n'.join(f'<template data-route="{route}">{body}</template>' for rout
 unknown='<template data-route="not-found"><main id="main-content" tabindex="-1" data-screen="not-found" class="members-main"><div class="members-heading"><h1>Такой страницы нет</h1><p>Ссылка могла измениться.</p><a class="button accent" href="#trip">К поездке</a></div></main></template>'
 screens['not-found']={'title':'Страница не найдена — Выше облаков','page':'','nav':'<nav class="section-nav" aria-label="Разделы страницы"><a href="#trip">К поездке</a></nav>'}
 data=json.dumps(screens,ensure_ascii=False).replace('</','<\\/')
-html='<!doctype html><html lang="ru"><head>'+head+'</head><body><a class="skip-link" href="#trip/main-content">К содержимому</a>'+header+markup['trip']+footer+tabbar+templates+unknown+'<script type="application/json" id="screen-config">'+data+'</script><script src="app.js"></script><script src="navigation.js"></script><noscript><p class="no-script">Для переключения экранов включите JavaScript.</p></noscript></body></html>'
+html='<!doctype html><html lang="ru"><head>'+head+'</head><body><div class="winter-backdrop" aria-hidden="true"></div><a class="skip-link" href="#trip/main-content">К содержимому</a>'+header+markup['trip']+footer+tabbar+templates+unknown+'<script type="application/json" id="screen-config">'+data+'</script><script src="app.js"></script><script src="navigation.js"></script><noscript><p class="no-script">Для переключения экранов включите JavaScript.</p></noscript></body></html>'
 def version_asset(match):
  path=match[2]
  digest=hashlib.sha256((ROOT/path).read_bytes()).hexdigest()[:10]
