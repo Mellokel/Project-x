@@ -84,3 +84,39 @@ html{scroll-padding-top:calc(var(--header-height) + 16px)}
 /* Three pages stay on one row on compact screens. */
 @media(max-width:600px){.header-pages .brand-name{display:none}.header-pages .brand-icon{margin-right:0}.page-nav a{padding:8px 10px;font-size:14px}}
 .person-link:hover strong{color:var(--accent)}
+
+/* Readable copy and comfortable touch targets. */
+.house-body p,.house-price>span,.house details,.house dl div,
+.section-head p,.travel-intro,.travel-panel p,.travel-panel li,
+.notice p,.amenities,.cost-list>div,.budget-total>span,
+.budget-total p,.payment-note,.last-note p,.trip-memory figcaption,
+.day-detail p{font-size:.9375rem}
+.switch-row small,.trip-strip small,.strip-note{font-size:.875rem}
+.notice strong{white-space:normal}
+.house summary{min-height:44px;align-items:center;padding:8px 0}
+.house details{padding-top:8px}
+.header-pages .brand{min-width:44px;min-height:44px;justify-content:center}
+.page-nav a{min-height:44px;display:flex;align-items:center}
+.section-nav a{min-height:44px;display:flex;align-items:center}
+.button,.segmented button{min-height:44px}
+.switch-row{min-height:44px}
+.switch{flex-shrink:0}
+a,button,input,summary{touch-action:manipulation}
+@media(min-width:701px) and (max-width:950px){.houses{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+/* Keyboard users can bypass both navigation rows on every screen. */
+.skip-link{position:fixed;top:8px;left:18px;z-index:200;padding:12px 18px;background:var(--forest);color:var(--text);border:1px solid var(--accent);border-radius:4px;transform:translateY(calc(-100% - 16px))}
+.skip-link:focus{transform:none}
+main:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+
+/* Keep both navigation rows, with no extra vertical space on short screens. */
+@media(max-height:500px) and (orientation:landscape){
+ .header-pages{min-height:44px}
+ .page-nav a{padding-top:2px;padding-bottom:2px}
+ .section-nav a{padding-top:2px;padding-bottom:2px}
+}
+
+/* Hide horizontal scrollbars while preserving swipe and keyboard access. */
+.section-nav,.timeline,.people-table-wrap{scrollbar-width:none}
+.section-nav::-webkit-scrollbar,.timeline::-webkit-scrollbar,
+.people-table-wrap::-webkit-scrollbar{display:none}

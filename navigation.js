@@ -11,6 +11,8 @@
  let frame = 0;
  let restoring = false;
  let scrollFrame = 0;
+ let sectionTargets = [];
+ let anchorSelection = null;
  const legacy = new Set(['route','stay','travel','budget','company']);
  function resolve(hash) {
   let path;
@@ -24,9 +26,46 @@
  function saveScroll() {
   if (!restoring) history.replaceState({...history.state, y:scrollY}, '', location.href);
  }
+ function updateActiveSection() {
+  if (restoring || !sectionTargets.length) return;
+  const threshold = header.getBoundingClientRect().bottom + 24;
+  let active = sectionTargets[0];
+  for (const entry of sectionTargets) {
+   if (entry.target.getBoundingClientRect().top <= threshold) active = entry;
+  }
+  // A short last section may never reach the top of the viewport.
+  const atBottom = scrollY > 0 && Math.ceil(scrollY + innerHeight) >= document.documentElement.scrollHeight - 2;
+  if (atBottom) active = sectionTargets[sectionTargets.length - 1];
+  // Keep an explicitly chosen section selected when scrolling is clamped
+  // at the page end. Resume scroll tracking as soon as the position changes.
+  if (anchorSelection && Math.abs(scrollY - anchorSelection.y) < 2) active = anchorSelection.entry;
+  else anchorSelection = null;
+  for (const {link} of sectionTargets) {
+   if (link === active.link) {
+    if (link.getAttribute('aria-current') === 'location') continue;
+    link.setAttribute('aria-current', 'location');
+    // Keep the selected item visible in the horizontal menu on mobile.
+    const nav = link.parentElement;
+    const bounds = nav.getBoundingClientRect();
+    const item = link.getBoundingClientRect();
+    if (item.left < bounds.left || item.right > bounds.right) {
+     nav.scrollTo({left:nav.scrollLeft + item.left - bounds.left - (bounds.width - item.width) / 2, behavior:'instant'});
+    }
+   } else link.removeAttribute('aria-current');
+  }
+ }
+ function scheduleScrollUpdate() {
+  if (scrollFrame) return;
+  scrollFrame = requestAnimationFrame(() => {
+   scrollFrame = 0;
+   saveScroll();
+   updateActiveSection();
+  });
+ }
  function render({restore = false, initial = false} = {}) {
   cancelAnimationFrame(frame);
   const {route, anchor} = resolve(location.hash);
+  anchorSelection = null;
   const changed = current !== route;
   const previous = cache.get(current);
   if (!cache.has(route)) cache.set(route, templates.get(route).content.firstElementChild.cloneNode(true));
@@ -36,21 +75,29 @@
    footer.before(main);
    current = route;
   }
+  contentObserver.disconnect();
+  contentObserver.observe(main);
   sections.innerHTML = config[route].nav;
+  document.querySelector('.skip-link').href = `#${route}/main-content`;
   document.title = config[route].title;
   document.querySelectorAll('[data-page]').forEach(link => {
    if (link.dataset.page === config[route].page) link.setAttribute('aria-current','page');
    else link.removeAttribute('aria-current');
   });
-  document.querySelectorAll('.section-nav a').forEach(link => {
-   if (resolve(link.hash).anchor === anchor && anchor) link.setAttribute('aria-current','location');
-  });
+  sectionTargets = [...sections.querySelectorAll('.section-nav a')].map(link => {
+   const id = resolve(link.hash).anchor;
+   return {link, target:[...main.querySelectorAll('[id]')].find(el => el.id === id)};
+  }).filter(entry => entry.target);
   updateHeaderHeight();
   restoring = true;
   frame = requestAnimationFrame(() => {
-   const target = anchor ? [...main.querySelectorAll('[id]')].find(el => el.id === anchor) : null;
-   const y = restore && Number.isFinite(history.state?.y) ? history.state.y : target ? target.getBoundingClientRect().top + scrollY - header.offsetHeight - 16 : 0;
+   const target = main.id === anchor ? main : anchor ? [...main.querySelectorAll('[id]')].find(el => el.id === anchor) : null;
+   const anchorY = target ? Math.max(0, target.getBoundingClientRect().top + scrollY - header.offsetHeight - 16) : 0;
+   const y = restore && Number.isFinite(history.state?.y) ? history.state.y : anchorY;
    window.scrollTo({top:Math.max(0,y),behavior:'instant'});
+   const entry = sectionTargets.find(entry => entry.target === target);
+   const clampedAnchorY = Math.min(anchorY, Math.max(0, document.documentElement.scrollHeight - innerHeight));
+   if (entry && Math.abs(scrollY - clampedAnchorY) < 2) anchorSelection = {entry, y:scrollY};
    if (!initial) {
     const focusTarget = target || main.querySelector('h1') || main;
     focusTarget.setAttribute('tabindex','-1');
@@ -62,12 +109,16 @@
    }
    restoring = false;
    saveScroll();
+   updateActiveSection();
   });
  }
  function updateHeaderHeight() {
   document.documentElement.style.setProperty('--header-height', `${header.getBoundingClientRect().height}px`);
  }
- new ResizeObserver(updateHeaderHeight).observe(header);
+ new ResizeObserver(() => {updateHeaderHeight(); scheduleScrollUpdate();}).observe(header);
+ // Images and responsive layout can move section boundaries without scrolling.
+ const contentObserver = new ResizeObserver(scheduleScrollUpdate);
+ for (const main of cache.values()) contentObserver.observe(main);
  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
  document.addEventListener('click', event => {
   const link = event.target.closest('a[href]');
@@ -79,10 +130,8 @@
   if (url.hash !== location.hash) history.pushState({y:0}, '', url.hash);
   render();
  });
- window.addEventListener('scroll', () => {
-  cancelAnimationFrame(scrollFrame);
-  scrollFrame = requestAnimationFrame(saveScroll);
- }, {passive:true});
+ window.addEventListener('scroll', scheduleScrollUpdate, {passive:true});
+ window.addEventListener('resize', scheduleScrollUpdate, {passive:true});
  // pushState navigations render explicitly; browser Back/Forward fires hashchange.
  window.addEventListener('hashchange', () => render({restore:true}));
  window.addEventListener('pagehide',saveScroll);
