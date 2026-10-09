@@ -13,6 +13,8 @@
  let scrollFrame = 0;
  let sectionTargets = [];
  let anchorSelection = null;
+ let scrollSaveTimer = 0;
+ let lastSaveTime = -Infinity;
  const legacy = new Set(['route','stay','travel','budget','company']);
  function resolve(hash) {
   let path;
@@ -24,11 +26,29 @@
   return {route:config[route] ? route : 'not-found', anchor:parts.join('/')};
  }
  function saveScroll() {
-  if (!restoring) history.replaceState({...history.state, y:scrollY}, '', location.href);
+  clearTimeout(scrollSaveTimer);
+  scrollSaveTimer = 0;
+  if (restoring || history.state?.y === scrollY) return;
+  lastSaveTime = performance.now();
+  try {
+   history.replaceState({...history.state, y:scrollY}, '', location.href);
+  } catch (error) {
+   // Safari can reject frequent history writes. Scroll tracking must still work.
+   if (error.name !== 'SecurityError' && error.name !== 'QuotaExceededError') throw error;
+  }
+ }
+ function scheduleScrollSave() {
+  clearTimeout(scrollSaveTimer);
+  // Save after scrolling settles, at most once a second for scroll-driven writes.
+  scrollSaveTimer = setTimeout(saveScroll, Math.max(300, 1000 - (performance.now() - lastSaveTime)));
  }
  function updateActiveSection() {
   if (restoring || !sectionTargets.length) return;
-  const threshold = header.getBoundingClientRect().bottom + 24;
+  const headerBottom = header.getBoundingClientRect().bottom;
+  const viewport = window.visualViewport;
+  const viewportBottom = viewport ? viewport.offsetTop + viewport.height : innerHeight;
+  // Switch in the upper reading area, before the next heading reaches the bar.
+  const threshold = headerBottom + Math.max(24, Math.min(160, (viewportBottom - headerBottom) / 4));
   let active = sectionTargets[0];
   for (const entry of sectionTargets) {
    if (entry.target.getBoundingClientRect().top <= threshold) active = entry;
@@ -58,11 +78,13 @@
   if (scrollFrame) return;
   scrollFrame = requestAnimationFrame(() => {
    scrollFrame = 0;
-   saveScroll();
    updateActiveSection();
+   scheduleScrollSave();
   });
  }
  function render({restore = false, initial = false} = {}) {
+  clearTimeout(scrollSaveTimer);
+  scrollSaveTimer = 0;
   cancelAnimationFrame(frame);
   const {route, anchor} = resolve(location.hash);
   anchorSelection = null;
@@ -132,6 +154,8 @@
  });
  window.addEventListener('scroll', scheduleScrollUpdate, {passive:true});
  window.addEventListener('resize', scheduleScrollUpdate, {passive:true});
+ // Safari's browser bars can resize the visible area without a layout resize.
+ window.visualViewport?.addEventListener('resize', scheduleScrollUpdate, {passive:true});
  // pushState navigations render explicitly; browser Back/Forward fires hashchange.
  window.addEventListener('hashchange', () => render({restore:true}));
  window.addEventListener('pagehide',saveScroll);
