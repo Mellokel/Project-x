@@ -9,3 +9,68 @@
  .road-main .section-head > .button{margin-top:18px}
 }
 @media(max-width:700px){.person-identity{gap:10px}.passengers .person-avatar,.people-table .person-avatar{width:46px;height:46px;flex-basis:46px}}
+
+/* A lightweight pencil-style route diagram; place labels stay readable at any width. */
+.route-sketch{margin:0 0 32px;padding:26px 28px 22px;border:1px solid #414b3f;border-radius:var(--radius-card);background:#1b211c;color:var(--text)}
+.route-sketch-heading{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+.route-sketch-heading h2{font-size:26px;margin:0;letter-spacing:-.03em}
+.route-sketch-heading>span{font-size:13px;color:var(--muted)}
+.route-sketch-canvas{height:360px;position:relative;margin-top:12px;background-image:radial-gradient(#b4a07818 .7px,transparent .7px);background-size:14px 14px}
+.route-sketch-lines{position:absolute;inset:0;width:100%;height:100%;overflow:visible;fill:none;stroke-linecap:round;stroke-linejoin:round}
+.route-sketch-lines>path,.sketch-terrain path{vector-effect:non-scaling-stroke;stroke-width:1.8}
+.sketch-arrowhead{stroke:#b4a078;pointer-events:none}
+.sketch-car{stroke:#d0c9b6}
+.sketch-flight{stroke:#b4a078;stroke-dasharray:8 7}
+.sketch-transfer{stroke:#a4b89b;stroke-dasharray:2 6}
+.sketch-next{stroke:#b4a078;stroke-dasharray:12 4 2 4}
+.sketch-echo{opacity:.25;stroke-width:1!important}
+.sketch-terrain{stroke:#829078;opacity:.24}
+.sketch-doodle{position:absolute;display:block;pointer-events:none;transform:translate(-50%,-50%);color:#d0c9b6}
+.sketch-doodle svg{display:block;width:100%;height:100%;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.doodle-paper{fill:#1b211c}
+.doodle-pencil{opacity:.3;stroke-width:1}
+.doodle-car{left:12%;top:43%;width:58px;height:44px;transform:translate(-50%,-50%) rotate(12deg)}
+.doodle-plane{left:47%;top:8%;width:50px;height:44px;color:#b4a078;transform:translate(-50%,-50%) rotate(-12deg)}
+.doodle-trees{left:51%;top:43%;width:78px;height:88px}
+.doodle-pine{stroke:#a4b89b}.doodle-gold{stroke:#b4a078}
+.doodle-gift{left:56%;top:90%;width:34px;height:34px;color:#b4a078;transform:translate(-50%,-50%) rotate(-8deg)}
+.doodle-snow{left:91%;top:59%;width:24px;height:24px;color:#a4b89b;opacity:.65}
+.doodle-snowboard{left:48%;top:26%;width:26px;height:65px;color:#b4a078;transform:translate(-50%,-50%) rotate(-15deg)}
+.doodle-skis{left:70%;top:62%;width:36px;height:58px;color:#d0c9b6;transform:translate(-50%,-50%) rotate(12deg)}
+.doodle-snow-north{left:6%;top:8%;width:20px;height:20px;transform:translate(-50%,-50%) rotate(15deg)}
+.doodle-snow-south{left:70%;top:5%;width:18px;height:18px;opacity:.5}
+.doodle-gift-start{left:9%;top:92%;width:28px;height:28px;transform:translate(-50%,-50%) rotate(10deg)}
+.doodle-gift-finish{left:90%;top:11%;width:26px;height:26px;color:#a4b89b;transform:translate(-50%,-50%) rotate(-14deg)}
+.sketch-place{position:absolute;transform:translate(-50%,-8px);display:flex;flex-direction:column;align-items:center;min-height:44px;width:150px;text-align:center;line-height:1.3;border-radius:10px}
+.sketch-place i{display:block;width:15px;height:15px;margin-bottom:8px;border:2px solid var(--accent);border-radius:48% 53% 46% 55%;background:#1b211c;box-shadow:0 0 0 4px #1b211c}
+.sketch-place strong,.sketch-place>span{padding:2px 5px}
+.sketch-place strong{font-size:20px;font-weight:500}
+.sketch-place>span{font-size:12px;color:var(--muted)}
+.sketch-moscow{left:18%;top:15%}.sketch-minvody{left:78%;top:28%}
+.sketch-arkhyz{left:32%;top:64%}.sketch-elbrus{left:79%;top:74%}
+.sketch-arkhyz i,.sketch-elbrus i{background:var(--accent)}
+.sketch-legend{display:flex;flex-wrap:wrap;gap:12px 24px;list-style:none;padding:18px 0 0;margin:0;border-top:1px solid var(--line);font-size:13px;color:#d0c9b6}
+.sketch-legend li{display:flex;align-items:center;gap:9px}
+.sketch-legend li>span{width:26px;flex:0 0 26px;border-top:2px solid #d0c9b6}
+.sketch-legend .legend-flight{border-top:2px dashed #b4a078}
+.sketch-legend .legend-transfer{border-top:2px dotted #a4b89b}
+.sketch-legend .legend-next{border-top:2px dashed #b4a078;border-bottom:1px dotted #b4a078;height:5px}
+.route-sketch figcaption{margin-top:16px;max-width:80ch;font-size:14px;line-height:1.6;color:var(--muted)}
+@media(hover:hover) and (pointer:fine){.sketch-place:hover strong{color:var(--accent)}.sketch-place:hover i{box-shadow:0 0 0 5px #b4a07830}}
+@media(max-width:700px){
+ .route-sketch{padding:22px 16px 20px;margin-bottom:26px}
+ .route-sketch-heading{display:block}
+ .route-sketch-heading h2{font-size:24px;margin-bottom:6px}
+ .route-sketch-canvas{height:340px}
+ .sketch-place{width:116px}
+ .sketch-place strong{font-size:17px}
+ .sketch-place>span{font-size:11px;max-width:110px}
+ .sketch-legend{gap:12px 18px}
+ .doodle-car{width:46px;height:35px}
+ .doodle-plane{width:42px;height:37px}
+ .doodle-trees{width:62px;height:70px}
+ .doodle-gift{width:28px;height:28px}
+ .doodle-snowboard{width:22px;height:55px}
+ .doodle-skis{width:30px;height:49px}
+ .doodle-gift-start,.doodle-gift-finish{width:24px;height:24px}
+}

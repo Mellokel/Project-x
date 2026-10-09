@@ -6,7 +6,7 @@ const vm = require('node:vm');
 const path = require('node:path');
 const source = fs.readFileSync(path.join(__dirname, '..', 'navigation.js'), 'utf8');
 
-function page(initialHash = '#trip') {
+function page(initialHash = '#trip', routeMap = null) {
  let now = 0, nextId = 0, rejectHistory = false, writes = 0;
  const frames = new Map(), timers = new Map(), events = {}, viewportEvents = {};
  const context = {scrollY:0, innerHeight:800};
@@ -31,7 +31,7 @@ function page(initialHash = '#trip') {
  const templates=Object.keys(config).filter(route=>route!=='trip').map(route=>({dataset:{route},content:{firstElementChild:main}}));
  const document = {
   documentElement:{scrollHeight:2600,style:{setProperty(){}}},
-  querySelector(selector){return ({'.site-header':header,footer:{before(){}},'.header-sections':sections,main,'.skip-link':{},'.tab-bar':tabBar})[selector];},
+  querySelector(selector){return ({'.site-header':header,footer:{before(){}},'.header-sections':sections,main,'.skip-link':{},'.tab-bar':tabBar,'.route-sketch-lines':routeMap})[selector];},
   querySelectorAll:selector=>selector==='[data-page]'?pageLinks:templates,
   getElementById:()=>({textContent:JSON.stringify(config)}),
   addEventListener(name,fn){events[name]=fn;}
@@ -111,3 +111,47 @@ for(const [route,index] of [['trip',0],['road',1],['participants',2],['person/12
 assert.equal(page('#missing').tabStyles.get('--tab-indicator-opacity'),0);
 console.log('Navigation: continuous scroll, brief pauses, History API failures and viewport resize passed.');
 console.log('Tab bar: direct page/profile links and missing-page selection passed.');
+
+// Check real route curves at mobile, landscape, tablet and desktop proportions.
+const roadSource = fs.readFileSync(path.join(__dirname, '..', 'site-source/road.html'), 'utf8');
+for (const viewport of [360, 390, 430, 700, 768, 844, 1280]) {
+ const width = viewport - (viewport <= 700 ? 66 : 122);
+ const height = viewport <= 700 ? 340 : 360;
+ const sx = width / 1000, sy = height / 400;
+ const centers = {'.sketch-arkhyz i':[.32,.64],'.sketch-minvody i':[.78,.28],'.sketch-elbrus i':[.79,.74]};
+ const paths = [...roadSource.matchAll(/<path[^>]*data-route-curve="([^"]+)" data-route-target="([^"]+)"([^>]*)>/g)].map(([,curve,target,attrs]) => ({
+  dataset:{routeCurve:curve,routeTarget:target},
+  hasAttribute:()=>attrs.includes('data-route-arrow'),
+  setAttribute(key,value){this[key]=value;},
+  nextElementSibling:{setAttribute(key,value){this[key]=value;}}
+ }));
+ assert.equal(paths.length,6,'All four routes and both pencil echoes are checked');
+ const svg = {viewBox:{baseVal:{width:1000,height:400}},
+  getBoundingClientRect:()=>({left:0,top:0,width,height}),querySelectorAll:()=>paths,
+  parentElement:{querySelector(selector){
+   const [x,y] = centers[selector];
+   return {getBoundingClientRect:()=>({left:x*width-7.5,top:y*height-7.5,width:15,height:15})};
+  }}};
+ page('#road', svg);
+ for (const path of paths) {
+  const curve = path.d.match(/-?[\d.]+/g).map(Number);
+  const [tx,ty] = curve.slice(-2);
+  const [cx,cy] = centers[path.dataset.routeTarget];
+  const gap = Math.hypot(tx*sx-cx*width,ty*sy-cy*height)-7.5;
+  assert.ok(gap>=14-1e-6, `Route clears circle and halo at ${viewport}px`);
+  if (!path.hasAttribute('data-route-arrow')) continue;
+  const [lx,ly,ax,ay,rx,ry] = path.nextElementSibling.d.match(/-?[\d.]+/g).map(Number);
+  assert.equal(ax,tx); assert.equal(ay,ty);
+  const span = Math.hypot((lx-rx)*sx,(ly-ry)*sy);
+  const depth = Math.hypot(((lx+rx)/2-tx)*sx,((ly+ry)/2-ty)*sy);
+  assert.ok(Math.abs(span-10)<1e-8, `Arrow span at ${viewport}px`);
+  assert.ok(Math.abs(depth-9)<1e-8, `Arrow depth at ${viewport}px`);
+  for (const [x,y] of [[lx,ly],[rx,ry]]) {
+   assert.ok(Math.hypot(x*sx-cx*width,y*sy-cy*height)>21.5, 'Arrow wings stay outside the gap');
+  }
+ }
+ const firstRender = paths.map(p=>p.d);
+ page('#road', svg);
+ assert.deepEqual(paths.map(p=>p.d),firstRender,'Repeated layout does not progressively shorten curves');
+}
+console.log('Route arrows: constant size and circle clearance at 360, 390, 430, 700, 768, 844 and 1280px passed.');

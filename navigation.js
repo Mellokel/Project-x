@@ -82,6 +82,50 @@
    scheduleScrollSave();
   });
  }
+ // The map stretches independently on each axis. Draw arrowheads in CSS pixels
+ // and convert them back to SVG coordinates so narrow screens cannot squash them.
+ function updateRouteArrows() {
+  const svg = document.querySelector('.route-sketch-lines');
+  if (!svg) return;
+  const bounds = svg.getBoundingClientRect();
+  const {width, height} = bounds;
+  const box = svg.viewBox.baseVal;
+  if (!width || !height) return;
+  const sx = width / box.width, sy = height / box.height;
+  const mix = (a, b, t) => ({x:a.x+(b.x-a.x)*t, y:a.y+(b.y-a.y)*t});
+  for (const path of svg.querySelectorAll('[data-route-target]')) {
+   const circle = svg.parentElement.querySelector(path.dataset.routeTarget);
+   if (!circle) continue;
+   const marker = circle.getBoundingClientRect();
+   const center = {x:marker.left+marker.width/2-bounds.left, y:marker.top+marker.height/2-bounds.top};
+   // Include the circle's halo and leave another 10px of visible breathing room.
+   const clearance = Math.max(marker.width, marker.height)/2 + 14;
+   const coords = path.dataset.routeCurve.match(/-?[\d.]+/g).map(Number);
+   const points = [0,2,4,6].map(i => ({x:coords[i], y:coords[i+1]}));
+   // Split the original cubic, never the previously shortened curve, on resize.
+   const split = t => {
+    const a = mix(points[0],points[1],t), b = mix(points[1],points[2],t), c = mix(points[2],points[3],t);
+    const d = mix(a,b,t), e = mix(b,c,t);
+    return [points[0],a,d,mix(d,e,t)];
+   };
+   let low = 0, high = 1;
+   for (let i=0;i<32;i++) {
+    const t = (low+high)/2, end = split(t)[3];
+    if (Math.hypot(end.x*sx-center.x,end.y*sy-center.y) < clearance) high = t;
+    else low = t;
+   }
+   const [start, control, before, tip] = split(low);
+   path.setAttribute('d', `M${start.x} ${start.y}C${control.x} ${control.y} ${before.x} ${before.y} ${tip.x} ${tip.y}`);
+   if (!path.hasAttribute('data-route-arrow')) continue;
+   const dx = (tip.x - before.x) * sx, dy = (tip.y - before.y) * sy;
+   const distance = Math.hypot(dx, dy);
+   if (!distance) continue;
+   const ux = dx / distance, uy = dy / distance;
+   const left = {x:tip.x + (-9 * ux - 5 * uy) / sx, y:tip.y + (-9 * uy + 5 * ux) / sy};
+   const right = {x:tip.x + (-9 * ux + 5 * uy) / sx, y:tip.y + (-9 * uy - 5 * ux) / sy};
+   path.nextElementSibling.setAttribute('d', `M${left.x} ${left.y}L${tip.x} ${tip.y}L${right.x} ${right.y}`);
+  }
+ }
  function render({restore = false, initial = false} = {}) {
   clearTimeout(scrollSaveTimer);
   scrollSaveTimer = 0;
@@ -119,6 +163,7 @@
   updateHeaderHeight();
   restoring = true;
   frame = requestAnimationFrame(() => {
+   updateRouteArrows();
    const target = main.id === anchor ? main : anchor ? [...main.querySelectorAll('[id]')].find(el => el.id === anchor) : null;
    const anchorY = target ? Math.max(0, target.getBoundingClientRect().top + scrollY - header.offsetHeight - 16) : 0;
    const y = restore && Number.isFinite(history.state?.y) ? history.state.y : anchorY;
@@ -145,7 +190,7 @@
  }
  new ResizeObserver(() => {updateHeaderHeight(); scheduleScrollUpdate();}).observe(header);
  // Images and responsive layout can move section boundaries without scrolling.
- const contentObserver = new ResizeObserver(scheduleScrollUpdate);
+ const contentObserver = new ResizeObserver(() => {updateRouteArrows(); scheduleScrollUpdate();});
  for (const main of cache.values()) contentObserver.observe(main);
  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
  document.addEventListener('click', event => {
