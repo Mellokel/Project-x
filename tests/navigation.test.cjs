@@ -6,7 +6,7 @@ const vm = require('node:vm');
 const path = require('node:path');
 const source = fs.readFileSync(path.join(__dirname, '..', 'navigation.js'), 'utf8');
 
-function page() {
+function page(initialHash = '#trip') {
  let now = 0, nextId = 0, rejectHistory = false, writes = 0;
  const frames = new Map(), timers = new Map(), events = {}, viewportEvents = {};
  const context = {scrollY:0, innerHeight:800};
@@ -19,13 +19,21 @@ function page() {
    getBoundingClientRect:()=>({left:i*140-nav.scrollLeft,right:i*140+120-nav.scrollLeft,width:120})};
  });
  const header = {offsetHeight:114,getBoundingClientRect:()=>({bottom:114,height:114})};
- const main = {id:'main-content',querySelectorAll:()=>targets,getAnimations:()=>[]};
+ const main = {id:'main-content',querySelectorAll:()=>targets,getAnimations:()=>[],remove(){},cloneNode(){return this;}};
  const sections = {innerHTML:'',querySelectorAll:()=>links};
+ const pageLinks = ['trip','road','participants'].map(page=>{
+  const attrs=new Map();
+  return {dataset:{page},setAttribute:(key,value)=>attrs.set(key,value),removeAttribute:key=>attrs.delete(key),getAttribute:key=>attrs.get(key)};
+ });
+ const tabStyles=new Map();
+ const tabBar={querySelectorAll:()=>pageLinks,style:{setProperty:(key,value)=>tabStyles.set(key,value)}};
+ const config=Object.fromEntries(['trip','road','participants','person/12','not-found'].map(route=>[route,{nav:'',title:route,page:route==='person/12'?'participants':route==='not-found'?'':route}]));
+ const templates=Object.keys(config).filter(route=>route!=='trip').map(route=>({dataset:{route},content:{firstElementChild:main}}));
  const document = {
   documentElement:{scrollHeight:2600,style:{setProperty(){}}},
-  querySelector(selector){return ({'.site-header':header,footer:{},'.header-sections':sections,main,'.skip-link':{}})[selector];},
-  querySelectorAll:()=>[],
-  getElementById:()=>({textContent:JSON.stringify({trip:{nav:'',title:'Trip',page:'trip'}})}),
+  querySelector(selector){return ({'.site-header':header,footer:{before(){}},'.header-sections':sections,main,'.skip-link':{},'.tab-bar':tabBar})[selector];},
+  querySelectorAll:selector=>selector==='[data-page]'?pageLinks:templates,
+  getElementById:()=>({textContent:JSON.stringify(config)}),
   addEventListener(name,fn){events[name]=fn;}
  };
  const history = {state:null,scrollRestoration:'auto',replaceState(state){
@@ -33,7 +41,7 @@ function page() {
   if (rejectHistory) throw Object.assign(new Error('History write rejected'), {name:rejectHistory});
   this.state=state;
  }};
- Object.assign(context, {document,history,location:{hash:'#trip',href:'https://example.test/index.html#trip'},
+ Object.assign(context, {document,history,location:{hash:initialHash,href:'https://example.test/index.html'+initialHash},
   performance:{now:()=>now},matchMedia:()=>({matches:true}),
   ResizeObserver:class {observe(){} disconnect(){}},
   requestAnimationFrame(fn){frames.set(++nextId,fn);return nextId;},cancelAnimationFrame:id=>frames.delete(id),
@@ -56,7 +64,7 @@ function page() {
  vm.runInNewContext(source,context);
  flush();
  return {
-  history,events,viewportEvents,flush,advance,
+  history,events,viewportEvents,flush,advance,pageLinks,tabStyles,
   scroll(y){context.scrollY=y;events.scroll();flush();},
   reject(name){rejectHistory=name;},
   get selected(){return links.findIndex(link=>link.getAttribute('aria-current')==='location');},
@@ -95,4 +103,11 @@ resize.scroll(640);
 assert.equal(resize.selected,1,'Switch when the next section enters the upper reading area');
 resize.scroll(900);resize.viewportEvents.resize();resize.flush();
 assert.equal(resize.selected,1);
+for(const [route,index] of [['trip',0],['road',1],['participants',2],['person/12',2]]) {
+ const tabs=page('#'+route);
+ assert.equal(tabs.pageLinks.findIndex(link=>link.getAttribute('aria-current')==='page'),index);
+ assert.equal(tabs.tabStyles.get('--active-tab'),index);
+}
+assert.equal(page('#missing').tabStyles.get('--tab-indicator-opacity'),0);
 console.log('Navigation: continuous scroll, brief pauses, History API failures and viewport resize passed.');
+console.log('Tab bar: direct page/profile links and missing-page selection passed.');

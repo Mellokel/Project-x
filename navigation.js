@@ -106,6 +106,12 @@
    if (link.dataset.page === config[route].page) link.setAttribute('aria-current','page');
    else link.removeAttribute('aria-current');
   });
+  const tabBar = document.querySelector('.tab-bar');
+  if (tabBar) {
+   const tabIndex = [...tabBar.querySelectorAll('[data-page]')].findIndex(link => link.dataset.page === config[route].page);
+   tabBar.style.setProperty('--active-tab', Math.max(0, tabIndex));
+   tabBar.style.setProperty('--tab-indicator-opacity', tabIndex < 0 ? 0 : 1);
+  }
   sectionTargets = [...sections.querySelectorAll('.section-nav a')].map(link => {
    const id = resolve(link.hash).anchor;
    return {link, target:[...main.querySelectorAll('[id]')].find(el => el.id === id)};

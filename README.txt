@@ -21,6 +21,8 @@ index.html#person/07/housing
 Участники и расселение: participants.json (housingArkhyz / housingElbrus).
 Шаблон карточек и профилей: scripts/build-participants.py
 Общие стили: style.css, road.css, participants.css, screens.css
+Плавающий таббар и компактная шапка: tab-bar.css
+Общая навигация и иконки таббара: scripts/build-site.py
 Маршрутизация и переходы: navigation.js
 Интерактивные блоки главной: app.js
 

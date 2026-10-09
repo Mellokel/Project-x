@@ -32,6 +32,11 @@ for route,screen in screens.items():
    assert target in screens,ref
    if anchor:assert anchor in screens[target].ids,ref
 assert len(json.loads((ROOT/'participants.json').read_text()))==12
+header=re.search(r'<header\b.*?</header>',html,re.S)[0]
+assert 'data-page=' not in header,'Primary pages must live in the bottom tab bar'
+tabbar=re.search(r'<nav class="page-nav tab-bar".*?</nav>',html,re.S)[0]
+assert re.findall(r'data-page="([^"]+)"',tabbar)==['trip','road','participants']
+for i in range(1,13):assert config[f'person/{i:02}']['page']=='participants'
 for f in ('road.html','participants.html',*[f'participant-{i:02}.html' for i in range(1,13)]):
  s=(ROOT/f).read_text();assert 'location.replace' in s and '<main' not in s,f
 print('All screens, profile links, anchors, assets and old-address redirects checked.')
