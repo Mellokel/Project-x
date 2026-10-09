@@ -37,7 +37,7 @@ icons={
  'participants':'<circle cx="9" cy="8" r="3"/><path d="M3 21v-2a6 6 0 0 1 12 0v2M16 5a3 3 0 0 1 0 6m2 4a5 5 0 0 1 3 4v2"/>'
 }
 tab_links=''.join(
- f'<a href="#{route}" data-page="{route}"'+(' aria-current="page"' if route=='trip' else '')+
+ f'<a href="#{route}" data-page="{route}" aria-label="{label}"'+(' aria-current="page"' if route=='trip' else '')+
  f'><svg viewBox="0 0 24 24" aria-hidden="true" focusable="false">{icons[route]}</svg><span>{label}</span></a>'
  for route,label in [('trip','Поездка'),('road','Дорога'),('participants','Участники')]
 )

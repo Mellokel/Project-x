@@ -47,6 +47,15 @@ main{padding-left:max(36px,env(safe-area-inset-left,0px));padding-right:max(36px
  .tab-bar{border-radius:30px}
  .tab-bar a{min-height:44px;flex-direction:row;gap:7px}
 }
+/* Compact icon-only navigation on phones, including landscape. */
+@media(max-width:700px),(max-height:500px) and (orientation:landscape){
+ :root{--tab-height:56px}
+ .tab-bar{padding:5px;border-radius:29px}
+ .tab-bar a{min-height:44px;padding:5px;gap:0;border-radius:23px}
+ .tab-bar a > span{display:none}
+ .tab-bar svg{width:24px;height:24px}
+ .tab-indicator{left:5px;top:5px;bottom:5px;width:calc((100% - 10px) / 3);border-radius:23px}
+}
 @media(prefers-reduced-motion:reduce){.tab-indicator,.tab-bar a{transition:none}}
 @media(prefers-reduced-transparency:reduce),(prefers-contrast:more){
  .tab-bar{background:var(--panel);backdrop-filter:none;-webkit-backdrop-filter:none;border-color:var(--muted)}
