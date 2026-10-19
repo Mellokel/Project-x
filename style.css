@@ -142,3 +142,16 @@ main:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
 .day-detail p{max-width:65ch;margin:8px auto 0}
 
 .elbrus-housing-heading{margin-top:40px}
+
+/* Keep the portrait chalet photo uncropped on narrow screens. */
+@media(max-width:700px){
+ .house-cover.house-photo.mingi-photo{height:auto;aspect-ratio:3 / 4}
+ .mingi-photo img{object-fit:contain}
+ .house-photo.mingi-photo:after{background:none}
+}
+
+@media(max-width:700px){
+ .house-cover.house-photo.mobile-full-photo{height:auto;aspect-ratio:var(--photo-ratio)}
+ .mobile-full-photo img{object-fit:contain}
+ .house-photo.mobile-full-photo:after{background:none}
+}
